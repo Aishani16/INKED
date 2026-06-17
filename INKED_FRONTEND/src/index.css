@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+.page-bg {
+  min-height: 100vh;
+  background: linear-gradient(155deg, #eef8fb 0%, #d7f1f6 45%, #c2eaf3 100%);
+}
+
+
+
