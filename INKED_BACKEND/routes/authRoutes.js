@@ -78,7 +78,8 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(
   {
-    userId: user._id
+    userId: user._id,
+    role: user.role
   },
   process.env.JWT_SECRET,
   {
@@ -89,7 +90,8 @@ router.post("/login", async (req, res) => {
 res.status(200).json({
   message: "Login successful",
   token,
-  username: user.username
+  username: user.username,
+  role: user.role
 });
 
   } catch (error) {
@@ -135,6 +137,7 @@ router.post("/google", async (req, res) => {
     const token = jwt.sign(
       {
         userId: user._id,
+        role: user.role,
       },
       process.env.JWT_SECRET,
       {
@@ -145,6 +148,7 @@ router.post("/google", async (req, res) => {
     res.json({
       token,
       username: user.username,
+      role: user.role,
     });
 
   } catch (error) {

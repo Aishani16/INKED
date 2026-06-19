@@ -11,26 +11,74 @@ export default function Editor() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+  if (id) return
+
+  const savedDraft =
+    localStorage.getItem("editorDraft")
+
+  if (savedDraft) {
+    try {
+      const parsed = JSON.parse(savedDraft)
+
+      setTitle(parsed.title || "")
+      setContent(parsed.content || "")
+      setTags(parsed.tags || "")
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  setIsLoaded(true)
+
+}, [id])
+
+useEffect(() => {
+  if (id) return
+  if (!isLoaded) return
+
+  localStorage.setItem(
+    "editorDraft",
+    JSON.stringify({
+      title,
+      content,
+      tags
+    })
+  )
+}, [title, content, tags, id, isLoaded])
+  
   useEffect(() => {
 
   if (!id) return
 
   const fetchBlog = async () => {
-    try {
+  try {
 
-      const response = await api.get(
-        `/blogs/${id}`
-      )
+    const token = localStorage.getItem("token")
 
-      setTitle(response.data.title)
-      setTags(response.data.tags.join(", "))
+    const response = await api.get(
+      `/blogs/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
 
-      setContent(response.data.content)
+    setTitle(response.data.title)
 
-    } catch (error) {
-      console.error(error)
-    }
+    setTags(
+      (response.data.tags || []).join(", ")
+    )
+
+    setContent(response.data.content)
+
+  } catch (error) {
+    console.error(error)
   }
+}
 
   fetchBlog()
 
@@ -67,7 +115,7 @@ if (id) {
       title,
       content,
       tags: tags.split(",").map(tag => tag.trim()),
-      status: "draft"
+      
     },
     {
       headers: {
@@ -84,7 +132,7 @@ if (id) {
       title,
       content,
       tags: tags.split(",").map(tag => tag.trim()),
-      status: "draft"
+      
     },
     {
       headers: {
@@ -98,6 +146,12 @@ if (id) {
 
     toast.success("Draft saved successfully!")
 
+localStorage.removeItem("editorDraft")
+
+if (!id) {
+  navigate(`/editor/${response.data._id}`)
+}
+
   } catch (error) {
     console.error(error)
 
@@ -108,7 +162,7 @@ if (id) {
   }
 }
 
-async function handlePublish() {
+async function handleSubmitForReview() {
 
   const token = localStorage.getItem("token")
 
@@ -129,60 +183,73 @@ async function handlePublish() {
 
   try {
 
-    let response
+    let blogId
 
-if (id) {
+    if (id) {
 
-  response = await api.put(
-    `/blogs/${id}`,
-    {
-      title,
-      content,
-      tags: tags.split(",").map(tag => tag.trim()),
-      status: "published"
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      const updateResponse = await api.put(
+        `/blogs/${id}`,
+        {
+          title,
+          content,
+          tags: tags
+            .split(",")
+            .map(tag => tag.trim())
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+
+      blogId = updateResponse.data._id
+
+    } else {
+
+      const createResponse = await api.post(
+        "/blogs/create",
+        {
+          title,
+          content,
+          tags: tags
+            .split(",")
+            .map(tag => tag.trim())
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+
+      blogId = createResponse.data._id
     }
-  )
 
-} else {
-
-  response = await api.post(
-    "/blogs/create",
-    {
-      title,
-      content,
-      tags: tags.split(",").map(tag => tag.trim()),
-      status: "published"
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
+    await api.put(
+      `/blogs/submit/${blogId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       }
-    }
-  )
+    )
 
-  }
-
-    console.log(response.data)
-
-    toast.success("Article published!")
+    toast.success(
+      "Article submitted for review"
+    )
 
     setTimeout(() => {
       navigate("/dashboard")
-      }, 1000)
+    }, 1000)
 
   } catch (error) {
 
-    console.error(error)
-
     toast.error(
       error.response?.data?.message ||
-        "Failed to publish article"
-)
+      "Submission failed"
+    )
 
   }
 }
@@ -332,15 +399,15 @@ if (id) {
             </button>
 
             <button
-              onClick={handlePublish}
-              className="px-3 py-1 rounded-3xl font-semibold text-white"
-              style={{
-                background:
-                  'linear-gradient(135deg, #28c840, #1e9c31)',
-              }}
-            >
-              Publish
-            </button>
+  onClick={handleSubmitForReview}
+  className="px-3 py-1 rounded-3xl font-semibold text-white"
+  style={{
+    background:
+      'linear-gradient(135deg, #28c840, #1e9c31)',
+  }}
+>
+  Submit For Review
+</button>
           </div>
         </div>
       </div>

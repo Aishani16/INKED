@@ -1,6 +1,8 @@
 const express = require("express");
 const Blog = require("../models/Blog");
 const authMiddleware = require("../middleware/authMiddleware");
+const optionalAuth =
+require("../middleware/optionalAuth");
 
 const router = express.Router();
 
@@ -11,13 +13,13 @@ router.post(
   async (req, res) => {
     try {
 
-      const { title, content, tags, status } = req.body;
+      const { title, content, tags } = req.body;
 
       const blog = await Blog.create({
         title,
         content,
         tags,
-        status,
+        status: "draft",
         author: req.user.userId
       });
 
@@ -52,7 +54,10 @@ router.get("/published", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
 
-    const blogs = await Blog.find();
+    
+    const blogs = await Blog.find({
+  status: "published"
+});
 
     res.status(200).json(blogs); {/*this 'blog' here basically is the array of objects
         i.e all the blogs, where each blog post is an object*/} 
@@ -91,38 +96,116 @@ router.get(
   }
 );
 
-{/*GET SINGLE BLOG BY ID*/}
-router.get("/:id", async (req, res) => {
-  try {
+router.put(
+  "/submit/:id",
+  authMiddleware,
+  async (req, res) => {
+    try {
 
-    const blog = await Blog.findById(req.params.id).populate(
-      "author",
-      "username email"
-    );
+      const blog = await Blog.findById(
+        req.params.id
+      );
 
-    if (!blog) {
-      return res.status(404).json({
-        message: "Blog not found"
+      if (!blog) {
+        return res.status(404).json({
+          message: "Blog not found"
+        });
+      }
+
+      if (
+        blog.author.toString() !==
+        req.user.userId
+      ) {
+        return res.status(403).json({
+          message: "Not authorized"
+        });
+      }
+
+      blog.status = "pending";
+
+      await blog.save();
+
+      res.status(200).json({
+        message: "Submitted for review",
+        blog
       });
+
+    } catch (error) {
+
+      res.status(500).json({
+        message: error.message
+      });
+
     }
-
-    res.status(200).json(blog);
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
   }
-});
+);
+
+{/*GET SINGLE BLOG BY ID*/}
+router.get(
+  "/:id",
+  optionalAuth,
+  async (req, res) => {
+    try {
+
+      const blog =
+        await Blog.findById(
+          req.params.id
+        ).populate(
+          "author",
+          "username email"
+        );
+
+      if (!blog) {
+        return res.status(404).json({
+          message: "Blog not found"
+        });
+      }
+
+      if (blog.status === "published") {
+        return res.status(200).json(blog);
+      }
+
+      if (!req.user) {
+        return res.status(403).json({
+          message: "Access denied"
+        });
+      }
+
+      const isOwner =
+        blog.author._id.toString() ===
+        req.user.userId;
+
+      const isAdmin =
+        req.user.role === "admin";
+
+      if (!isOwner && !isAdmin) {
+        return res.status(403).json({
+          message: "Access denied"
+        });
+      }
+
+      res.status(200).json(blog);
+
+    } catch (error) {
+
+      res.status(500).json({
+        message: error.message
+      });
+
+    }
+  }
+);
 
 {/*UPDATE BLOG*/}
 
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
 
-    const blog = await Blog.findById(req.params.id);
+  if (req.body.status) {
+    delete req.body.status;
+  }
+
+  const blog = await Blog.findById(req.params.id);
 
     if (!blog) {
       return res.status(404).json({
@@ -187,5 +270,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
   }
 });
+
+
 
 module.exports = router;

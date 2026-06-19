@@ -41,6 +41,10 @@ export default function Login() {
   "username",
   response.data.username
 )
+  localStorage.setItem(
+  "role",
+  response.data.role
+)
 
 toast.success("Login successful!")
   navigate("/dashboard")
@@ -70,6 +74,11 @@ toast.success("Login successful!")
       "username",
       response.data.username
     );
+
+    localStorage.setItem(
+  "role",
+  response.data.role
+);
 
     toast.success("Google login successful!");
 

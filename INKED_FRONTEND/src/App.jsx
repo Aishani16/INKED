@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './Components/ProtectedRoute.jsx'
 import GuestRoute from './Components/GuestRoute.jsx'
+import AdminRoute from "./Components/AdminRoute";
 
 
 import Home from './Pages/Home.jsx'
@@ -11,6 +12,7 @@ import Dashboard from './Pages/Dashboard.jsx'
 import Editor from './Pages/Editor.jsx'
 import BlogDetail from './Pages/BlogDetail.jsx'
 import Blogs from "./Pages/Blogs.jsx"
+import AdminDashboard from "./Pages/AdminDashboard";
 
 export default function App() {
   return (
@@ -38,8 +40,32 @@ export default function App() {
             </ProtectedRoute>
         }
        />
-        <Route path="/editor" element={<Editor />} />
-        <Route path="/editor/:id" element={<Editor />} />
+        <Route
+  path="/editor"
+  element={
+    <ProtectedRoute>
+      <Editor />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/editor/:id"
+  element={
+    <ProtectedRoute>
+      <Editor />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin"
+  element={
+    <AdminRoute>
+      <AdminDashboard />
+    </AdminRoute>
+  }
+/>
         {/* :slug is the unique ID for each blog post */}
         <Route path="/blog/:id" element={<BlogDetail />} />
       </Routes>

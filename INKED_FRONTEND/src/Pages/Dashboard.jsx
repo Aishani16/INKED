@@ -37,12 +37,20 @@ export default function Dashboard() {
   }, [])
 
   const drafts = blogs.filter(
-    blog => blog.status === 'draft'
-  )
+  blog => blog.status === "draft"
+)
 
-  const published = blogs.filter(
-    blog => blog.status === 'published'
-  )
+const pending = blogs.filter(
+  blog => blog.status === "pending"
+)
+
+const published = blogs.filter(
+  blog => blog.status === "published"
+)
+
+const rejected = blogs.filter(
+  blog => blog.status === "rejected"
+)
   const stats = [
   {
     emoji: '📝',
@@ -63,13 +71,16 @@ export default function Dashboard() {
     change: null,
   },
   {
-    emoji: '🏷️',
-    label: 'Tags Used',
-    value: new Set(
-      blogs.flatMap(blog => blog.tags || [])
-    ).size,
-    change: null,
-  }
+    emoji: "⏳",
+    label: "Pending",
+    value: pending.length,
+  },
+  {
+    emoji: "❌",
+    label: "Rejected",
+    value: rejected.length,
+  },
+  
 ]
 
   return (
@@ -110,7 +121,7 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
           {stats.map(s => (
             <DashboardCard
               key={s.label}
@@ -153,7 +164,41 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section>
+
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-5">
+            <h2
+              className="text-lg font-semibold"
+              style={{ color: '#0f2a35' }}
+            >
+              Pending Reviews{' '}
+              <span
+                className="text-xs font-bold ml-1 px-2 py-0.5 rounded-full"
+                style={{
+                  background: 'rgba(33,150,188,0.15)',
+color: '#1a6080',
+                }}
+              >
+                {pending.length}
+              </span>
+            </h2>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pending.map(post => (
+              <BlogCard
+                key={post._id}
+                title={post.title}
+                excerpt={post.content}
+                tags={post.tags}
+                status="Pending"
+                slug={post._id}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-12">
           <div className="flex items-center justify-between mb-5">
             <h2
               className="text-lg font-semibold"
@@ -181,6 +226,39 @@ export default function Dashboard() {
                 excerpt={post.content}
                 tags={post.tags}
                 status="Published"
+                slug={post._id}
+              />
+            ))}
+          </div>
+        </section>
+  
+        <section>
+          <div className="flex items-center justify-between mb-5">
+            <h2
+              className="text-lg font-semibold"
+              style={{ color: '#0f2a35' }}
+            >
+              Rejected{' '}
+              <span
+                className="text-xs font-bold ml-1 px-2 py-0.5 rounded-full"
+                style={{
+                  background: 'rgba(255,0,0,0.12)',
+color: '#b00020',
+                }}
+              >
+                {rejected.length}
+              </span>
+            </h2>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {rejected.map(post => (
+              <BlogCard
+                key={post._id}
+                title={post.title}
+                excerpt={post.content}
+                tags={post.tags}
+                status="Rejected"
                 slug={post._id}
               />
             ))}

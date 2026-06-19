@@ -36,9 +36,18 @@ useEffect(() => {
 
     try {
 
-      const response = await api.get(
-        `/blogs/${id}`
-      )
+      const token = localStorage.getItem("token")
+
+const response = await api.get(
+  `/blogs/${id}`,
+  {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`
+        }
+      : {}
+  }
+)
 
       setPost(response.data)
       console.log(response.data)

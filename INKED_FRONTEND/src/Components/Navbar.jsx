@@ -58,18 +58,23 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [username, setUsername] = useState('')
+  const [role, setRole] = useState('')
 
   const { pathname } = useLocation()
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     const storedUsername = localStorage.getItem('username')
+    const storedRole = localStorage.getItem('role')
 
     setIsLoggedIn(!!token)
 
     if (storedUsername) {
       setUsername(storedUsername)
     }
+    if (storedRole) {
+  setRole(storedRole)
+}
   }, [pathname])
 
   function handleLogout() {
@@ -84,6 +89,7 @@ export default function Navbar() {
 
   localStorage.removeItem("token")
   localStorage.removeItem("username")
+  localStorage.removeItem("role")
 
   setIsLoggedIn(false)
   setUsername("")
@@ -152,6 +158,11 @@ export default function Navbar() {
               Dashboard
             </NavLink>
           )}
+          {role === "admin" && (
+  <NavLink to="/admin">
+    Admin Dashboard
+  </NavLink>
+)}
 
           <a
             href="#about"
@@ -225,6 +236,12 @@ export default function Navbar() {
               Dashboard
             </NavLink>
           )}
+
+          {role === "admin" && (
+  <NavLink to="/admin">
+    Admin Dashboard
+  </NavLink>
+)}
 
           <a
             href="#about"

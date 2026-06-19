@@ -124,7 +124,7 @@ export default function Blogs() {
             </p>
           </div>
 
-          {blogs.length === 0 ? (
+          {filteredBlogs.length === 0 ? (
             <div
               className="rounded-3xl p-12 text-center"
               style={{
