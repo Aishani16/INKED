@@ -32,6 +32,18 @@ const userSchema = new mongoose.Schema({
   enum: ["author", "admin"],
   default: "author",
 },
+
+  tokenVersion: {
+  type: Number,
+  default: 0,
+},
+
+bookmarks: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Blog",
+  },
+],
 });
 
 module.exports = mongoose.model("User", userSchema);

@@ -201,11 +201,11 @@ router.get(
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
 
-  if (req.body.status) {
-    delete req.body.status;
-  }
+    if (req.body.status) {
+      delete req.body.status;
+    }
 
-  const blog = await Blog.findById(req.params.id);
+    const blog = await Blog.findById(req.params.id);
 
     if (!blog) {
       return res.status(404).json({
@@ -213,20 +213,75 @@ router.put("/:id", authMiddleware, async (req, res) => {
       });
     }
 
-    // Only author can edit
     if (blog.author.toString() !== req.user.userId) {
       return res.status(403).json({
         message: "Not authorized"
       });
     }
 
-    const updatedBlog = await Blog.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    // CASE 1: Draft or Rejected → normal update
+    if (
+      blog.status === "draft" ||
+      blog.status === "rejected"
+    ) {
 
-    res.status(200).json(updatedBlog);
+      const updatedBlog =
+        await Blog.findByIdAndUpdate(
+          req.params.id,
+          req.body,
+          { new: true }
+        );
+
+      return res.status(200).json(updatedBlog);
+    }
+
+    // CASE 2: Published → create revision
+    if (blog.status === "published") {
+
+      const existingRevision =
+        await Blog.findOne({
+          originalBlog: blog._id,
+          status: "pending"
+        });
+
+      if (existingRevision) {
+        return res.status(400).json({
+          message:
+            "A pending revision already exists for this blog"
+        });
+      }
+
+      const revision = await Blog.create({
+        title: req.body.title ?? blog.title,
+        content: req.body.content ?? blog.content,
+        tags: req.body.tags ?? blog.tags,
+
+        author: blog.author,
+
+        status: "pending",
+
+        originalBlog: blog._id
+      });
+
+      return res.status(200).json({
+        message:
+          "Revision submitted for admin review",
+        revision
+      });
+    }
+
+    // CASE 3: Pending
+    if (blog.status === "pending") {
+
+      const updatedPending =
+        await Blog.findByIdAndUpdate(
+          req.params.id,
+          req.body,
+          { new: true }
+        );
+
+      return res.status(200).json(updatedPending);
+    }
 
   } catch (error) {
 
@@ -250,7 +305,13 @@ router.delete("/:id", authMiddleware, async (req, res) => {
       });
     }
 
-    if (blog.author.toString() !== req.user.userId) {
+    const isAuthor =
+      blog.author.toString() === req.user.userId;
+
+    const isAdmin =
+      req.user.role === "admin";
+
+    if (!isAuthor && !isAdmin) {
       return res.status(403).json({
         message: "Not authorized"
       });
@@ -270,7 +331,78 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
   }
 });
+router.post(
+  "/:id/like",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const blog = await Blog.findById(
+        req.params.id
+      );
 
+      if (!blog) {
+        return res.status(404).json({
+          message: "Blog not found",
+        });
+      }
 
+      const userId = req.user.userId;
+
+      if (
+        blog.likes.includes(userId)
+      ) {
+        return res.status(400).json({
+          message: "Already liked",
+        });
+      }
+
+      blog.likes.push(userId);
+
+      await blog.save();
+
+      res.status(200).json({
+        message: "Blog liked",
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+      });
+    }
+  }
+);
+router.delete(
+  "/:id/like",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const blog = await Blog.findById(
+        req.params.id
+      );
+
+      if (!blog) {
+        return res.status(404).json({
+          message: "Blog not found",
+        });
+      }
+
+      blog.likes =
+        blog.likes.filter(
+          (id) =>
+            id.toString() !==
+            req.user.userId
+        );
+
+      await blog.save();
+
+      res.status(200).json({
+        message: "Like removed",
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+      });
+    }
+  }
+);
 
 module.exports = router;

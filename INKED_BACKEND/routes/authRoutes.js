@@ -1,3 +1,4 @@
+const Blog = require("../models/Blog");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const authMiddleware = require("../middleware/authMiddleware");
@@ -79,7 +80,8 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
   {
     userId: user._id,
-    role: user.role
+    role: user.role,
+    tokenVersion: user.tokenVersion
   },
   process.env.JWT_SECRET,
   {
@@ -138,6 +140,7 @@ router.post("/google", async (req, res) => {
       {
         userId: user._id,
         role: user.role,
+        tokenVersion: user.tokenVersion
       },
       process.env.JWT_SECRET,
       {
@@ -172,5 +175,144 @@ router.get(
 
   }
 );
+router.post(
+  "/logout",
+  authMiddleware,
+  async (req, res) => {
+    try {
+
+      const user =
+        await User.findById(
+          req.user.userId
+        );
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found"
+        });
+      }
+
+      user.tokenVersion += 1;
+
+      await user.save();
+
+      res.status(200).json({
+        message: "Logged out"
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        message: error.message
+      });
+
+    }
+  }
+);
+
+router.post(
+  "/bookmark/:blogId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+
+      const user = await User.findById(
+        req.user.userId
+      );
+
+      const blog = await Blog.findById(
+        req.params.blogId
+      );
+
+      if (!blog) {
+        return res.status(404).json({
+          message: "Blog not found"
+        });
+      }
+
+      if (
+        user.bookmarks.includes(blog._id)
+      ) {
+        return res.status(400).json({
+          message: "Already bookmarked"
+        });
+      }
+
+      user.bookmarks.push(blog._id);
+
+      await user.save();
+
+      res.status(200).json({
+        message: "Blog bookmarked"
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        message: error.message
+      });
+
+    }
+  }
+);
+
+router.get(
+  "/bookmarks",
+  authMiddleware,
+  async (req, res) => {
+    try {
+
+      const user =
+        await User.findById(
+          req.user.userId
+        ).populate("bookmarks");
+
+      res.status(200).json(
+        user.bookmarks
+      );
+
+    } catch (error) {
+
+      res.status(500).json({
+        message: error.message
+      });
+
+    }
+  }
+);
+router.delete(
+  "/bookmark/:blogId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+
+      const user = await User.findById(
+        req.user.userId
+      );
+
+      user.bookmarks =
+        user.bookmarks.filter(
+          (id) =>
+            id.toString() !==
+            req.params.blogId
+        );
+
+      await user.save();
+
+      res.status(200).json({
+        message:
+          "Bookmark removed"
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        message: error.message
+      });
+
+    }
+  }
+);
+
 
 module.exports = router;

@@ -18,30 +18,37 @@ const blogSchema = new mongoose.Schema(
     },
 
     status: {
-  type: String,
-  enum: [
-    "draft",
-    "pending",
-    "published",
-    "rejected"
-  ],
-  default: "draft",
-},
+      type: String,
+      enum: [
+        "draft",
+        "pending",
+        "published",
+        "rejected",
+      ],
+      default: "draft",
+    },
 
-originalBlog: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "Blog",
-  default: null,
-},
+    originalBlog: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Blog",
+      default: null,
+    },
 
-rejectionReason: {
-  type: String,
-  default: "",
-},
+    rejectionReason: {
+      type: String,
+      default: "",
+    },
 
     tags: [
       {
         type: String,
+      },
+    ],
+
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
       },
     ],
   },
