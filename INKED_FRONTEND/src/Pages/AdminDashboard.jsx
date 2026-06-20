@@ -95,37 +95,7 @@ export default function AdminDashboard() {
     }
   }
 
-  async function deleteBlog(id) {
-
-    const confirmed = window.confirm(
-      "Delete this blog?"
-    );
-
-    if (!confirmed) return;
-
-    try {
-
-      await api.delete(
-        `/admin/blog/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem(
-              "token"
-            )}`,
-          },
-        }
-      );
-
-      toast.success("Blog deleted");
-
-      fetchPendingBlogs();
-
-    } catch {
-
-      toast.error("Delete failed");
-
-    }
-  }
+  
 
   return (
     <div className="page-bg min-h-screen">
@@ -166,9 +136,9 @@ export default function AdminDashboard() {
               }}
             >
               Review pending submissions,
-              approve quality content,
-              reject unsuitable articles,
-              and manage the platform.
+approve quality content,
+or reject revisions and articles
+that do not meet publishing standards.
             </p>
           </div>
 
@@ -316,18 +286,7 @@ export default function AdminDashboard() {
                         Reject
                       </button>
 
-                      <button
-                        onClick={() =>
-                          deleteBlog(blog._id)
-                        }
-                        className="px-4 py-2 rounded-lg text-white font-medium"
-                        style={{
-                          background:
-                            "linear-gradient(135deg,#ef4444,#dc2626)",
-                        }}
-                      >
-                        Delete
-                      </button>
+                      
 
                     </div>
 

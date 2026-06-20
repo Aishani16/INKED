@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import api from "../services/api";
 
 function PenIcon() {
   return (
@@ -77,24 +78,50 @@ export default function Navbar() {
 }
   }, [pathname])
 
-  function handleLogout() {
+  async function handleLogout() {
 
   const confirmed = window.confirm(
     "Are you sure you want to logout?"
-  )
+  );
 
   if (!confirmed) {
-    return
+    return;
   }
 
-  localStorage.removeItem("token")
-  localStorage.removeItem("username")
-  localStorage.removeItem("role")
+  try {
 
-  setIsLoggedIn(false)
-  setUsername("")
+    const token =
+      localStorage.getItem("token");
 
-  window.location.href = "/"
+    if (token) {
+
+      await api.post(
+        "/auth/logout",
+        {},
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`
+          }
+        }
+      );
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+  } finally {
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("role");
+
+    setIsLoggedIn(false);
+    setUsername("");
+
+    window.location.href = "/";
+  }
 }
 
   function NavLink({ to, children }) {
@@ -154,10 +181,16 @@ export default function Navbar() {
           <NavLink to="/blogs">Blogs</NavLink>
 
           {isLoggedIn && (
-            <NavLink to="/dashboard">
-              Dashboard
-            </NavLink>
-          )}
+  <>
+    <NavLink to="/dashboard">
+      Dashboard
+    </NavLink>
+
+    <NavLink to="/bookmarks">
+      Saved Blogs
+    </NavLink>
+  </>
+)}
           {role === "admin" && (
   <NavLink to="/admin">
     Admin Dashboard
@@ -232,10 +265,16 @@ export default function Navbar() {
           <NavLink to="/blogs">Blogs</NavLink>
 
           {isLoggedIn && (
-            <NavLink to="/dashboard">
-              Dashboard
-            </NavLink>
-          )}
+  <>
+    <NavLink to="/dashboard">
+      Dashboard
+    </NavLink>
+
+    <NavLink to="/bookmarks">
+      Saved Blogs
+    </NavLink>
+  </>
+)}
 
           {role === "admin" && (
   <NavLink to="/admin">

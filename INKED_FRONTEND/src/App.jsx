@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './Components/ProtectedRoute.jsx'
 import GuestRoute from './Components/GuestRoute.jsx'
 import AdminRoute from "./Components/AdminRoute";
+import Bookmarks from "./Pages/Bookmarks";
 
 
 import Home from './Pages/Home.jsx'
@@ -13,10 +14,12 @@ import Editor from './Pages/Editor.jsx'
 import BlogDetail from './Pages/BlogDetail.jsx'
 import Blogs from "./Pages/Blogs.jsx"
 import AdminDashboard from "./Pages/AdminDashboard";
+import AuthWatcher from "./Components/AuthWatcher";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthWatcher />
       <Routes>
         <Route path="/" element={<Home />} />  
         <Route path="/login" element={    
@@ -34,6 +37,10 @@ export default function App() {
         }
 />
         <Route path="/blogs" element={<Blogs />} />
+        <Route
+  path="/bookmarks"
+  element={<Bookmarks />}
+/>
         <Route path="/dashboard" element={
             <ProtectedRoute>
             <Dashboard />

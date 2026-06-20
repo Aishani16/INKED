@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import api from '../services/api.js'
 import Navbar from '../Components/Navbar.jsx'
 import Footer from '../Components/Footer.jsx'
+import { toast } from "react-toastify";
 
 
 
@@ -12,6 +13,13 @@ export default function BlogDetail() {
 
   const [post, setPost] = useState(null)
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [role, setRole] = useState("")
+  const [isBookmarked, setIsBookmarked] =
+  useState(false);
+  const [isLiked, setIsLiked] =
+  useState(false);
+  const [likeCount, setLikeCount] =
+  useState(0);
   const handleDelete = async () => {
     const confirmed = window.confirm("Are you sure you want to delete this blog?")
     if (!confirmed) return
@@ -50,6 +58,32 @@ const response = await api.get(
 )
 
       setPost(response.data)
+      setLikeCount(
+  response.data.likes?.length || 0
+);
+      if (token) {
+  setIsLiked(
+    response.data.likes?.includes(
+      currentUserId
+    )
+  );
+}
+      if (token) {
+  const bookmarksRes = await api.get(
+    "/auth/bookmarks",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  setIsBookmarked(
+    bookmarksRes.data.some(
+      (blog) => blog._id === id
+    )
+  );
+}
       console.log(response.data)
 
     } catch (error) {
@@ -58,6 +92,7 @@ const response = await api.get(
 
     }
   }
+  
 
   fetchBlog()
 
@@ -70,6 +105,7 @@ if (token) {
     )
 
     setCurrentUserId(payload.userId)
+    setRole(localStorage.getItem("role") || "")
 
   } catch (error) {
     console.error(error)
@@ -88,6 +124,101 @@ if (token) {
   const isAuthor =
   currentUserId &&
   post?.author?._id === currentUserId
+  const isAdmin = role === "admin"
+
+  const handleBookmark = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (isBookmarked) {
+      await api.delete(
+        `/auth/bookmark/${post._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setIsBookmarked(false);
+      toast.success("Bookmark removed");
+
+    } else {
+      await api.post(
+        `/auth/bookmark/${post._id}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setIsBookmarked(true);
+      toast.success("Blog saved");
+    }
+
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Bookmark action failed"
+    );
+  }
+};
+
+const handleLike = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.error(
+        "Please login to like blogs"
+      );
+      return;
+    }
+
+    if (isLiked) {
+      await api.delete(
+        `/blogs/${post._id}/like`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setIsLiked(false);
+      setLikeCount((prev) => prev - 1);
+
+      toast.success("Like removed");
+    } else {
+      await api.post(
+        `/blogs/${post._id}/like`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setIsLiked(true);
+      setLikeCount((prev) => prev + 1);
+
+      toast.success("Blog liked");
+    }
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Like action failed"
+    );
+  }
+};
+
   return (
     <div className="page-bg min-h-screen">
       <Navbar />
@@ -169,55 +300,45 @@ if (token) {
 
           <div className="flex gap-2">
             <button
-              className="text-xs px-3 py-1.5 rounded-lg font-medium"
-              style={{
-                color: '#4a6a77',
-                border: '1px solid rgba(33,150,188,0.18)',
-              }}
-            >
-              🔖 Save
-            </button>
+  onClick={handleBookmark}
+  className="text-xs px-3 py-1.5 rounded-lg font-medium"
+  style={{
+  color: isBookmarked ? "#fff" : "#4a6a77",
+  background: isBookmarked ? "#2196bc" : "transparent",
+  border: "1px solid rgba(33,150,188,0.18)",
+}}
+>
+ {isBookmarked ? "✅ Saved" : "🔖 Save"}
+</button>
              
-            <button
-              className="text-xs px-3 py-1.5 rounded-lg font-medium"
-              style={{
-                color: '#4a6a77',
-                border: '1px solid rgba(33,150,188,0.18)',
-              }}
-            >
-              
-              ↗ Share
-            </button>
+            
 
 
-            {isAuthor && (
-  <>
-    <button
-      className="text-xs px-3 py-1.5 rounded-lg font-medium"
-      style={{
-        color: '#4a6a77',
-        border: '1px solid rgba(33,150,188,0.18)',
-      }}
-    >
-      <Link
-        to={`/editor/${post._id}`}
-        className="text-xs rounded-lg font-medium"
-      >
-        ✏️ Edit
-      </Link>
-    </button>
+{isAuthor && (
+  <button
+    className="text-xs px-3 py-1.5 rounded-lg font-medium"
+    style={{
+      color: '#4a6a77',
+      border: '1px solid rgba(33,150,188,0.18)',
+    }}
+  >
+    <Link to={`/editor/${post._id}`}>
+      ✏️ Edit
+    </Link>
+  </button>
+)}
 
-    <button
-      onClick={handleDelete}
-      className="text-xs px-3 py-1.5 rounded-lg font-medium"
-      style={{
-        color: '#4a6a77',
-        border: '1px solid rgba(33,150,188,0.18)',
-      }}
-    >
-      🗑 Delete
-    </button>
-  </>
+{(isAuthor || isAdmin) && (
+  <button
+    onClick={handleDelete}
+    className="text-xs px-3 py-1.5 rounded-lg font-medium"
+    style={{
+      color: '#4a6a77',
+      border: '1px solid rgba(33,150,188,0.18)',
+    }}
+  >
+    🗑 Delete
+  </button>
 )}
 
           </div>
@@ -232,6 +353,35 @@ if (token) {
             {post.content}
           </p>
         </div>
+        <div
+  className="flex items-center gap-6 mt-10 pt-6"
+  style={{
+    borderTop:
+      "1px solid rgba(33,150,188,0.12)",
+  }}
+>
+  <button
+    onClick={handleLike}
+    className="text-sm font-medium"
+    style={{ color: "#4a6a77" }}
+  >
+    {isLiked ? "❤️" : "🤍"} {likeCount}
+  </button>
+
+  <button
+    className="text-sm font-medium"
+    style={{ color: "#4a6a77" }}
+  >
+    💬 Comments
+  </button>
+
+  <button
+    className="text-sm font-medium"
+    style={{ color: "#4a6a77" }}
+  >
+    ↗ Share
+  </button>
+</div>
 
         {/* Author Footer */}
         <div
@@ -282,4 +432,4 @@ if (token) {
       <Footer />
     </div>
   )
-}
+}  

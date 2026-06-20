@@ -187,44 +187,38 @@ async function handleSubmitForReview() {
 
     if (id) {
 
-      const updateResponse = await api.put(
-        `/blogs/${id}`,
-        {
-          title,
-          content,
-          tags: tags
-            .split(",")
-            .map(tag => tag.trim())
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      )
-
-      blogId = updateResponse.data._id
-
-    } else {
-
-      const createResponse = await api.post(
-        "/blogs/create",
-        {
-          title,
-          content,
-          tags: tags
-            .split(",")
-            .map(tag => tag.trim())
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      )
-
-      blogId = createResponse.data._id
+  const updateResponse = await api.put(
+    `/blogs/${id}`,
+    {
+      title,
+      content,
+      tags: tags
+        .split(",")
+        .map(tag => tag.trim())
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     }
+  )
+
+  if (updateResponse.data.revision) {
+
+    toast.success(
+      "Revision submitted for admin review"
+    )
+
+    setTimeout(() => {
+      navigate("/dashboard")
+    }, 1000)
+
+    return
+  }
+
+  blogId = updateResponse.data._id
+
+}
 
     await api.put(
       `/blogs/submit/${blogId}`,
