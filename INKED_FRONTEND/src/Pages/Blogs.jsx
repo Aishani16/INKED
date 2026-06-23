@@ -11,7 +11,7 @@ export default function Blogs() {
   const [blogs, setBlogs] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const filteredBlogs = blogs.filter((blog) => {
-  const search = searchTerm.toLowerCase();
+  const search = searchTerm.trim().toLowerCase();
 
   const titleMatch =
     blog.title?.toLowerCase().includes(search);
@@ -89,6 +89,7 @@ export default function Blogs() {
                 className="w-full pl-10 pr-4 py-3 rounded-xl outline-none"
                 style={{ background: "rgba(255,255,255,0.65)",backdropFilter: "blur(10px)",}}/>
           </div>
+          
         </div>
  
           {/* Comm. Art. Card */}
@@ -139,7 +140,7 @@ export default function Blogs() {
                 className="text-2xl font-semibold mb-3"
                 style={{ color: "#0f2a35" }}
               >
-                No Blogs Yet
+                No Results Found
               </h3>
 
               <p style={{ color: "#4a6a77" }}>
@@ -168,13 +169,13 @@ export default function Blogs() {
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredBlogs.map((blog) => (
                   <BlogCard
-                    key={blog._id}
-                    title={blog.title}
-                    excerpt={blog.content}
-                    tags={blog.tags}
-                    slug={blog._id}
-                    status="Published"
-                  />
+  key={blog._id}
+  title={blog.title}
+  excerpt={blog.content}
+  tags={blog.tags}
+  slug={blog.slug}
+  status="Published"
+/>
                 ))}
               </div>
             </>

@@ -153,12 +153,12 @@ const rejected = blogs.filter(
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {drafts.map(post => (
               <BlogCard
-                key={post._id}
+                key={post.slug}
                 title={post.title}
                 excerpt={post.content}
                 tags={post.tags}
                 status="Draft"
-                slug={post._id}
+                slug={post.slug}
               />
             ))}
           </div>
@@ -187,12 +187,12 @@ color: '#1a6080',
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {pending.map(post => (
               <BlogCard
-                key={post._id}
+                key={post.slug}
                 title={post.title}
                 excerpt={post.content}
                 tags={post.tags}
                 status="Pending"
-                slug={post._id}
+                slug={post.slug}
               />
             ))}
           </div>
@@ -221,12 +221,12 @@ color: '#1a6080',
           <div className="grid sm:grid-cols-2 gap-4">
             {published.map(post => (
               <BlogCard
-                key={post._id}
+                key={post.slug}
                 title={post.title}
                 excerpt={post.content}
                 tags={post.tags}
                 status="Published"
-                slug={post._id}
+                slug={post.slug}
               />
             ))}
           </div>
@@ -254,12 +254,12 @@ color: '#b00020',
           <div className="grid sm:grid-cols-2 gap-4">
             {rejected.map(post => (
               <BlogCard
-                key={post._id}
+                key={post.slug}
                 title={post.title}
                 excerpt={post.content}
                 tags={post.tags}
                 status="Rejected"
-                slug={post._id}
+                slug={post.slug}
               />
             ))}
           </div>

@@ -59,7 +59,7 @@ useEffect(() => {
     const token = localStorage.getItem("token")
 
     const response = await api.get(
-      `/blogs/${id}`,
+  `/blogs/edit/${id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -163,88 +163,110 @@ if (!id) {
 }
 
 async function handleSubmitForReview() {
-
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
 
   if (!token) {
-    toast.error("Please login first")
-    return
+    toast.error("Please login first");
+    return;
   }
 
   if (!title.trim()) {
-    toast.warning("Please enter a title")
-    return
+    toast.warning("Please enter a title");
+    return;
   }
 
   if (!content.trim()) {
-    toast.warning("Please write some content")
-    return
+    toast.warning("Please write some content");
+    return;
   }
 
   try {
+    let blogId;
 
-    let blogId
-
+    // Existing blog
     if (id) {
+      const updateResponse = await api.put(
+        `/blogs/${id}`,
+        {
+          title,
+          content,
+          tags: tags
+            .split(",")
+            .map(tag => tag.trim())
+            .filter(Boolean),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  const updateResponse = await api.put(
-    `/blogs/${id}`,
-    {
-      title,
-      content,
-      tags: tags
-        .split(",")
-        .map(tag => tag.trim())
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
+      // Published blog revision
+      if (updateResponse.data.revision) {
+        toast.success(
+          "Revision submitted for admin review"
+        );
+
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1000);
+
+        return;
       }
+
+      blogId = id;
     }
-  )
 
-  if (updateResponse.data.revision) {
+    // Brand new blog
+    else {
+      const createResponse = await api.post(
+        "/blogs/create",
+        {
+          title,
+          content,
+          tags: tags
+            .split(",")
+            .map(tag => tag.trim())
+            .filter(Boolean),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    toast.success(
-      "Revision submitted for admin review"
-    )
-
-    setTimeout(() => {
-      navigate("/dashboard")
-    }, 1000)
-
-    return
-  }
-
-  blogId = updateResponse.data._id
-
-}
+      blogId = createResponse.data._id;
+    }
 
     await api.put(
       `/blogs/submit/${blogId}`,
       {},
       {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       }
-    )
+    );
+
+    localStorage.removeItem("editorDraft");
 
     toast.success(
       "Article submitted for review"
-    )
+    );
 
     setTimeout(() => {
-      navigate("/dashboard")
-    }, 1000)
+      navigate("/dashboard");
+    }, 1000);
 
   } catch (error) {
+    console.error(error);
 
     toast.error(
       error.response?.data?.message ||
       "Submission failed"
-    )
-
+    );
   }
 }
 

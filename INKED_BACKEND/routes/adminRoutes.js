@@ -26,11 +26,17 @@ router.get("/pending", async (req, res) => {
 
   } catch (error) {
 
-    res.status(500).json({
-      message: error.message
+  if (error.code === 11000) {
+    return res.status(400).json({
+      message:
+        "Another blog already uses this title."
     });
-
   }
+
+  res.status(500).json({
+    message: error.message
+  });
+}
 });
 
 router.put("/approve/:id", async (req, res) => {
@@ -61,6 +67,12 @@ router.put("/approve/:id", async (req, res) => {
       originalBlog.title = blog.title;
       originalBlog.content = blog.content;
       originalBlog.tags = blog.tags;
+      originalBlog.slug = blog.title
+  .toLowerCase()
+  .trim()
+  .replace(/[^a-z0-9\s-]/g, "")
+  .replace(/\s+/g, "-");
+      
 
       await originalBlog.save();
 
@@ -85,11 +97,17 @@ router.put("/approve/:id", async (req, res) => {
 
   } catch (error) {
 
-    res.status(500).json({
-      message: error.message
+  if (error.code === 11000) {
+    return res.status(400).json({
+      message:
+        "Another blog already uses this title."
     });
-
   }
+
+  res.status(500).json({
+    message: error.message
+  });
+}
 });
 
 router.put("/reject/:id", async (req, res) => {

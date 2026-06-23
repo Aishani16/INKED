@@ -11,6 +11,10 @@ const blogSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    slug: {
+  type: String,
+  unique: true,
+},
 
     author: {
       type: mongoose.Schema.Types.ObjectId,
@@ -54,7 +58,8 @@ const blogSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
+  
 );
 
 module.exports = mongoose.model("Blog", blogSchema);

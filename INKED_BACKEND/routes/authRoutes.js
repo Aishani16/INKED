@@ -109,7 +109,7 @@ router.post("/google", async (req, res) => {
     const { credential } = req.body;
 
     const ticket =
-      await client.verifyIdToken({
+      await client.verifyIdToken({  //Google,is this token genuine?
         idToken: credential,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
@@ -117,7 +117,7 @@ router.post("/google", async (req, res) => {
     const payload = ticket.getPayload();
 
     const {
-      sub,
+      sub,  //sub is Google's unique user ID.
       email,
       name,
       picture
@@ -127,7 +127,7 @@ router.post("/google", async (req, res) => {
 
     if (!user) {
 
-      user = await User.create({
+      user = await User.create({   //if acc. doesnt exist
         username: name,
         email,
         googleId: sub,
@@ -291,7 +291,7 @@ router.delete(
       );
 
       user.bookmarks =
-        user.bookmarks.filter(
+        user.bookmarks.filter( //filter used to remove selected blogid
           (id) =>
             id.toString() !==
             req.params.blogId

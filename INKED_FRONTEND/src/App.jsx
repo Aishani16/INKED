@@ -74,7 +74,7 @@ export default function App() {
   }
 />
         {/* :slug is the unique ID for each blog post */}
-        <Route path="/blog/:id" element={<BlogDetail />} />
+        <Route path="/blog/:slug" element={<BlogDetail />} />
       </Routes>
     </BrowserRouter>
   )

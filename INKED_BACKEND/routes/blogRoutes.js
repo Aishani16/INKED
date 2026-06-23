@@ -15,21 +15,37 @@ router.post(
 
       const { title, content, tags } = req.body;
 
+      const slug = title
+  .toLowerCase()
+  .trim()
+  .replace(/[^a-z0-9\s-]/g, "")
+  .replace(/\s+/g, "-");
+
       const blog = await Blog.create({
-        title,
-        content,
-        tags,
-        status: "draft",
-        author: req.user.userId
-      });
+  title,
+  slug,
+  content,
+  tags,
+  status: "draft",
+  author: req.user.userId
+});
 
       res.status(201).json(blog); 
 
     } catch (error) {
-      res.status(500).json({
-        message: error.message
-      });
-    }
+
+  if (error.code === 11000) {
+    return res.status(400).json({
+      message:
+        "A blog with this title already exists."
+    });
+  }
+
+  res.status(500).json({
+    message: error.message
+  });
+
+}
   }
 );
 {/*GET ALL BLOGS*/}
@@ -140,20 +156,52 @@ router.put(
   }
 );
 
-{/*GET SINGLE BLOG BY ID*/}
+{/*GET SINGLE BLOG */}
 router.get(
-  "/:id",
+  "/edit/:id",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const blog = await Blog.findById(req.params.id);
+
+      if (!blog) {
+        return res.status(404).json({
+          message: "Blog not found"
+        });
+      }
+
+      if (
+        blog.author.toString() !== req.user.userId &&
+        req.user.role !== "admin"
+      ) {
+        return res.status(403).json({
+          message: "Not authorized"
+        });
+      }
+
+      res.status(200).json(blog);
+
+    } catch (error) {
+      res.status(500).json({
+        message: error.message
+      });
+    }
+  }
+);
+
+router.get(
+  "/:slug",
   optionalAuth,
   async (req, res) => {
     try {
 
       const blog =
-        await Blog.findById(
-          req.params.id
-        ).populate(
-          "author",
-          "username email"
-        );
+  await Blog.findOne({
+    slug: req.params.slug
+  }).populate(
+    "author",
+    "username email"
+  );
 
       if (!blog) {
         return res.status(404).json({
@@ -205,6 +253,14 @@ router.put("/:id", authMiddleware, async (req, res) => {
       delete req.body.status;
     }
 
+    if (req.body.title) {
+  req.body.slug = req.body.title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-");
+}
+
     const blog = await Blog.findById(req.params.id);
 
     if (!blog) {
@@ -251,17 +307,20 @@ router.put("/:id", authMiddleware, async (req, res) => {
         });
       }
 
-      const revision = await Blog.create({
-        title: req.body.title ?? blog.title,
-        content: req.body.content ?? blog.content,
-        tags: req.body.tags ?? blog.tags,
+      const revisionTitle =
+  req.body.title ?? blog.title;
 
-        author: blog.author,
+const revisionSlug = `${blog.slug}-revision`;
 
-        status: "pending",
-
-        originalBlog: blog._id
-      });
+const revision = await Blog.create({
+  title: revisionTitle,
+  slug: revisionSlug,
+  content: req.body.content ?? blog.content,
+  tags: req.body.tags ?? blog.tags,
+  author: blog.author,
+  status: "pending",
+  originalBlog: blog._id
+});
 
       return res.status(200).json({
         message:
@@ -285,11 +344,18 @@ router.put("/:id", authMiddleware, async (req, res) => {
 
   } catch (error) {
 
-    res.status(500).json({
-      message: error.message
+  if (error.code === 11000) {
+    return res.status(400).json({
+      message:
+        "A blog with this title already exists."
     });
-
   }
+
+  res.status(500).json({
+    message: error.message
+  });
+
+}
 });
 
 {/*DELETE BLOG*/}

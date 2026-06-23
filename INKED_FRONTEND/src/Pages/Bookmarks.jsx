@@ -158,11 +158,11 @@ export default function Bookmarks() {
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
               {blogs.map((blog) => (
                 <BlogCard
-                  key={blog._id}
+                  key={blog.slug}
                   title={blog.title}
                   excerpt={blog.content}
                   tags={blog.tags}
-                  slug={blog._id}
+                  slug={blog.slug}
                   status="Saved"
                 />
               ))}

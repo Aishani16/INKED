@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 
 
 export default function BlogDetail() {
-  const { id } = useParams()
+  const { slug } = useParams()
   const navigate = useNavigate()
 
   const [post, setPost] = useState(null)
@@ -39,80 +39,73 @@ console.error("Delete failed:", error)
 }
 
 useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  let userId = null;
+
+  if (token) {
+    try {
+      const payload = JSON.parse(
+        atob(token.split(".")[1])
+      );
+
+      userId = payload.userId;
+
+      setCurrentUserId(userId);
+      setRole(localStorage.getItem("role") || "");
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   const fetchBlog = async () => {
-
     try {
-
-      const token = localStorage.getItem("token")
-
-const response = await api.get(
-  `/blogs/${id}`,
-  {
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`
+      const response = await api.get(
+        `/blogs/${slug}`,
+        {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {},
         }
-      : {}
-  }
-)
+      );
 
-      setPost(response.data)
+      setPost(response.data);
+
       setLikeCount(
-  response.data.likes?.length || 0
-);
-      if (token) {
+        response.data.likes?.length || 0
+      );
+
+      if (userId) {
   setIsLiked(
-    response.data.likes?.includes(
-      currentUserId
+    response.data.likes?.some(
+      like => String(like) === userId
     )
   );
 }
+
       if (token) {
-  const bookmarksRes = await api.get(
-    "/auth/bookmarks",
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+        const bookmarksRes =
+          await api.get("/auth/bookmarks", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
-  setIsBookmarked(
-    bookmarksRes.data.some(
-      (blog) => blog._id === id
-    )
-  );
-}
-      console.log(response.data)
-
+        setIsBookmarked(
+          bookmarksRes.data.some(
+            (blog) => blog.slug === slug
+          )
+        );
+      }
     } catch (error) {
-
-      console.error(error)
-
+      console.error(error);
     }
-  }
-  
+  };
 
-  fetchBlog()
-
-const token = localStorage.getItem("token")
-
-if (token) {
-  try {
-    const payload = JSON.parse(
-      atob(token.split(".")[1])
-    )
-
-    setCurrentUserId(payload.userId)
-    setRole(localStorage.getItem("role") || "")
-
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-}, [id])
+  fetchBlog();
+}, [slug]);
   if (!post) {
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -192,7 +185,7 @@ const handleLike = async () => {
       setIsLiked(false);
       setLikeCount((prev) => prev - 1);
 
-      toast.success("Like removed");
+      
     } else {
       await api.post(
         `/blogs/${post._id}/like`,
@@ -207,7 +200,7 @@ const handleLike = async () => {
       setIsLiked(true);
       setLikeCount((prev) => prev + 1);
 
-      toast.success("Blog liked");
+      
     }
   } catch (error) {
     console.error(error);
