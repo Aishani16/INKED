@@ -15,6 +15,8 @@ import BlogDetail from './Pages/BlogDetail.jsx'
 import Blogs from "./Pages/Blogs.jsx"
 import AdminDashboard from "./Pages/AdminDashboard";
 import AuthWatcher from "./Components/AuthWatcher";
+import Profile from "./Pages/Profile";
+
 
 export default function App() {
   return (
@@ -54,6 +56,11 @@ export default function App() {
       <Editor />
     </ProtectedRoute>
   }
+/>
+
+<Route
+  path="/profile/:username"
+  element={<Profile />}
 />
 
 <Route

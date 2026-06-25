@@ -20,6 +20,12 @@ export default function BlogDetail() {
   useState(false);
   const [likeCount, setLikeCount] =
   useState(0);
+  const [comments, setComments] =
+  useState([]);
+  const [commentText, setCommentText] =
+  useState("");
+
+
   const handleDelete = async () => {
     const confirmed = window.confirm("Are you sure you want to delete this blog?")
     if (!confirmed) return
@@ -72,6 +78,13 @@ useEffect(() => {
       );
 
       setPost(response.data);
+
+      const commentsRes =
+  await api.get(
+    `/comments/${response.data._id}`
+  );
+
+setComments(commentsRes.data);
 
       setLikeCount(
         response.data.likes?.length || 0
@@ -212,6 +225,98 @@ const handleLike = async () => {
   }
 };
 
+const handleComment = async () => {
+  try {
+    const token =
+      localStorage.getItem("token");
+
+    if (!token) {
+      toast.error(
+        "Please login to comment"
+      );
+      return;
+    }
+
+    if (!commentText.trim()) {
+      toast.error(
+        "Comment cannot be empty"
+      );
+      return;
+    }
+
+    const response =
+      await api.post(
+        `/comments/${post._id}`,
+        {
+          text: commentText,
+        },
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      );
+
+    setComments((prev) => [
+      response.data,
+      ...prev,
+    ]);
+
+    setCommentText("");
+
+    
+
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to comment"
+    );
+  }
+};
+
+
+const handleDeleteComment =
+  async (commentId) => {
+    try {
+
+      const token =
+        localStorage.getItem("token");
+
+      const confirmed = window.confirm(
+  "Are you sure you want to delete this comment?"
+);
+
+if (!confirmed) return;
+
+await api.delete(
+  `/comments/${commentId}`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
+
+setComments(
+  comments.filter(
+    (comment) =>
+      comment._id !== commentId
+  )
+);
+
+    } catch (error) {
+
+      console.error(error);
+
+      toast.error(
+        "Failed to delete comment"
+      );
+    }
+  };
+
   return (
     <div className="page-bg min-h-screen">
       <Navbar />
@@ -264,22 +369,28 @@ const handleLike = async () => {
           }}
         >
           <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm"
-              style={{
-                background:
-                  'linear-gradient(135deg, #2196bc, #1a6080)',
-              }}
-            >
-              {post.author?.username?.charAt(0).toUpperCase() || 'U'}
-            </div>
+            <Link
+  to={`/profile/${post.author?.username}`}
+>
+  <div
+    className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer"
+    style={{
+      background:
+        "linear-gradient(135deg,#2196bc,#1a6080)",
+    }}
+  >
+    {post.author?.username
+      ?.charAt(0)
+      .toUpperCase()}
+  </div>
+</Link>
 
             <div>
               <p
                 className="text-sm font-semibold"
                 style={{ color: '#0f2a35' }}
               >
-                {post.author?.username || 'Unknown Author'}
+                Written By {post.author?.username || 'Unknown Author'}
               </p>
 
               <p
@@ -376,50 +487,128 @@ const handleLike = async () => {
   </button>
 </div>
 
-        {/* Author Footer */}
+<div
+  className="mt-12 pt-8"
+  style={{
+    borderTop:
+      "1px solid rgba(33,150,188,0.12)",
+  }}
+>
+  <h3
+    className="text-xl font-semibold mb-6"
+    style={{ color: "#0f2a35" }}
+  >
+    Comments ({comments.length})
+  </h3>
+
+  <div className="mb-8">
+  <textarea
+    value={commentText}
+    onChange={(e) =>
+      setCommentText(e.target.value)
+    }
+    placeholder="Write a comment..."
+    rows={4}
+    className="w-full p-3 rounded-xl border outline-none"
+  />
+
+  <button
+    onClick={handleComment}
+    className="mt-3 px-4 py-2 rounded-lg text-white text-sm"
+    style={{
+      background:
+        "linear-gradient(135deg,#2196bc,#1a6080)",
+    }}
+  >
+    Post Comment
+  </button>
+</div>
+
+  {comments.length === 0 ? (
+    <p
+      style={{
+        color: "#7a9aa8",
+      }}
+    >
+      No comments yet.
+    </p>
+  ) : (
+    <div className="space-y-4">
+      {comments.map((comment) => (
         <div
-          className="flex items-center gap-4 mt-14 pt-8"
+          key={comment._id}
+          className="p-4 rounded-xl"
           style={{
-            borderTop: '1px solid rgba(33,150,188,0.12)',
+            background:
+              "rgba(33,150,188,0.04)",
           }}
         >
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-            style={{
-              background:
-                'linear-gradient(135deg, #2196bc, #1a6080)',
-            }}
-          >
-            {post.author?.username?.charAt(0).toUpperCase() || 'U'}
-          </div>
+          <div className="flex justify-between items-start">
+  <div className="flex items-start gap-3">
 
-          <div>
-            <p
-              className="text-sm font-semibold"
-              style={{ color: '#0f2a35' }}
-            >
-              Written by {post.author?.username || 'Unknown Author'}
-            </p>
+    <Link to={`/profile/${comment.user?.username}`}>
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+        style={{
+          background:
+            "linear-gradient(135deg,#2196bc,#1a6080)",
+        }}
+      >
+        {comment.user?.username
+          ?.charAt(0)
+          .toUpperCase()}
+      </div>
+    </Link>
 
-            <p
-              className="text-xs"
-              style={{ color: '#7a9aa8' }}
-            >
-              Published on Inked
-            </p>
-          </div>
+    <div>
+      <div className="flex items-center gap-2">
+        <Link
+          to={`/profile/${comment.user?.username}`}
+          className="font-medium hover:underline"
+          style={{ color: "#0f2a35" }}
+        >
+          {comment.user?.username}
+        </Link>
 
-          <Link
-            to="/signup"
-            className="ml-auto px-4 py-2 rounded-xl text-white text-xs font-semibold hover:opacity-90"
-            style={{
-              background:
-                'linear-gradient(135deg, #2196bc, #1a6080)',
-            }}
-          >
-            Start Writing
-          </Link>
+        <span
+          className="text-xs"
+          style={{ color: "#7a9aa8" }}
+        >
+          • {new Date(comment.createdAt).toLocaleDateString()}
+        </span>
+      </div>
+
+      <p
+        className="mt-1"
+        style={{ color: "#4a6a77" }}
+      >
+        {comment.text}
+      </p>
+    </div>
+
+  </div>
+
+  {(currentUserId === comment.user?._id ||
+    role === "admin") && (
+    <button
+      className="text-xs hover:underline"
+      onClick={() =>
+        handleDeleteComment(comment._id)
+      }
+    >
+      Delete
+    </button>
+  )}
+</div>
+
         </div>
+      ))}
+    </div>
+  )}
+</div>
+
+       
+        
       </article>
 
       <Footer />

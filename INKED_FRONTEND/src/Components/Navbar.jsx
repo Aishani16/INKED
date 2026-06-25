@@ -206,41 +206,55 @@ export default function Navbar() {
         </nav>
 
         {/* DESKTOP AUTH */}
-        <div className="hidden md:flex items-center gap-3">
-          {isLoggedIn ? (
-            <>
-              
+        {/* DESKTOP AUTH */}
+<div className="hidden md:flex items-center gap-3">
+  {isLoggedIn ? (
+    <>
+      <button
+        onClick={handleLogout}
+        className="text-sm font-medium px-3 py-1.5"
+        style={{ color: "#1b4257" }}
+      >
+        Logout
+      </button>
 
-              <button
-                onClick={handleLogout}
-                className="text-sm font-medium px-3 py-1.5"
-                style={{ color: '#1b4257' }}
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="text-sm font-medium text-[#1b4257] hover:text-[#2196bc] transition-colors px-3 py-1.5"
-              >
-                Login
-              </Link>
-
-              <Link
-                to="/signup"
-                className="text-sm font-semibold text-white px-4 py-1.5 rounded-lg hover:opacity-90"
-                style={{
-                  background:
-                    'linear-gradient(135deg, #2196bc, #1a6080)',
-                }}
-              >
-                Sign Up
-              </Link>
-            </>
-          )}
+      <Link
+        to={`/profile/${username}`}
+        title="Profile"
+      >
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold"
+          style={{
+            background:
+              "linear-gradient(135deg,#2196bc,#1a6080)",
+          }}
+        >
+          {username?.charAt(0).toUpperCase()}
         </div>
+      </Link>
+    </>
+  ) : (
+    <>
+      <Link
+        to="/login"
+        className="text-sm font-medium text-[#1b4257] hover:text-[#2196bc] transition-colors px-3 py-1.5"
+      >
+        Login
+      </Link>
+
+      <Link
+        to="/signup"
+        className="text-sm font-semibold text-white px-4 py-1.5 rounded-lg hover:opacity-90"
+        style={{
+          background:
+            "linear-gradient(135deg, #2196bc, #1a6080)",
+        }}
+      >
+        Sign Up
+      </Link>
+    </>
+  )}
+</div>
 
         {/* MOBILE MENU BUTTON */}
         <button
