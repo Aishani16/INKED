@@ -126,7 +126,7 @@ export default function EditorJSComponent({
 
   <div
     ref={holderRef}
-    className="relative w-full min-h-[500px] rounded-xl p-6"
+    className="relative w-full min-h-500px rounded-xl p-6"
     style={{
       background: "#fff",
       border: "1px solid rgba(33,150,188,0.20)",
