@@ -1,0 +1,174 @@
+/* =========================
+   Editor Container
+========================= */
+
+.codex-editor {
+  max-width: 100%;
+  font-family: Inter, sans-serif;
+}
+
+.ce-block__content,
+.ce-toolbar__content {
+  max-width: 780px;
+}
+
+.ce-block {
+  padding: 2px 0;
+}
+
+/* =========================
+   Paragraph
+========================= */
+
+.ce-paragraph {
+  font-size: 18px;
+  line-height: 1.9;
+  color: #2a4a5a;
+}
+
+/* =========================
+   Headings
+========================= */
+
+.ce-header {
+  color: #0f2a35;
+  font-family: "DM Serif Display", serif;
+  font-weight: 700;
+  margin: 0.8rem 0;
+}
+
+/* H1 */
+h1.ce-header {
+  font-size: 3rem;
+}
+
+/* H2 */
+h2.ce-header {
+  font-size: 2.5rem;
+}
+
+/* H3 */
+h3.ce-header {
+  font-size: 2rem;
+}
+
+/* H4 */
+h4.ce-header {
+  font-size: 1.7rem;
+}
+
+/* H5 */
+h5.ce-header {
+  font-size: 1.45rem;
+}
+
+/* H6 */
+h6.ce-header {
+  font-size: 1.2rem;
+}
+
+/* =========================
+   Placeholder
+========================= */
+
+.ce-paragraph[data-placeholder]:empty::before,
+.ce-header[data-placeholder]:empty::before {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* =========================
+   Toolbar
+========================= */
+
+.ce-toolbar__plus,
+.ce-toolbar__settings-btn {
+  color: #2196bc;
+}
+
+.ce-toolbar__plus:hover,
+.ce-toolbar__settings-btn:hover {
+  background: #eef8fb;
+}
+
+/* =========================
+   Selected Block
+========================= */
+
+.ce-block--selected .ce-block__content {
+  background: rgba(33,150,188,0.06);
+  border-radius: 8px;
+}
+
+/* =========================
+   Checklist
+========================= */
+
+.cdx-checklist__item {
+  margin: 8px 0;
+}
+
+/* =========================
+   Quote
+========================= */
+
+.cdx-quote {
+  border-left: 4px solid #2196bc;
+  padding-left: 18px;
+  color: #45606f;
+  font-style: italic;
+}
+
+/* =========================
+   Code
+========================= */
+
+.ce-code__textarea {
+  background: #111827;
+  color: #f8fafc;
+  border-radius: 10px;
+  padding: 16px;
+  font-family: "Fira Code", monospace;
+}
+
+/* =========================
+   Delimiter
+========================= */
+
+.cdx-delimiter {
+  color: #94a3b8;
+}
+
+/* =========================
+   Table
+========================= */
+
+.tc-table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tc-cell {
+  border: 1px solid #dbe5eb;
+}
+
+/* =========================
+   Smooth typing
+========================= */
+
+.ce-block__content {
+  transition: all .15s ease;
+}
+
+.codex-editor {
+    width: 100%;
+}
+
+.codex-editor__redactor {
+    padding-bottom: 120px !important;
+}
+
+.ce-block__content,
+.ce-toolbar__content {
+    max-width: 100% !important;
+}

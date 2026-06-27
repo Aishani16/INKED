@@ -6,6 +6,19 @@ export default function BlogCard({ title, excerpt, author, date, readTime, tags 
     ? { background: 'rgba(40,200,64,0.12)', color: '#1a7a30' }
     : { background: 'rgba(254,188,46,0.15)', color: '#9a6800' }
 
+    const excerptText =
+  typeof excerpt === "string"
+    ? excerpt
+    : excerpt?.blocks
+        ?.map((block) => {
+          if (block.data?.text) return block.data.text;
+          if (Array.isArray(block.data?.items))
+            return block.data.items.join(" ");
+          return "";
+        })
+        .join(" ")
+        .trim();
+
   return (
     <div
       className="rounded-2xl p-5 flex flex-col gap-3 transition-all hover:-translate-y-0.5"
@@ -51,11 +64,20 @@ export default function BlogCard({ title, excerpt, author, date, readTime, tags 
 
 
       
-      {excerpt && (
-        <p className="text-sm leading-relaxed" style={{ color: '#4a6a77', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {excerpt}
-        </p>
-      )}
+      {excerptText && (
+  <p
+    className="text-sm leading-relaxed"
+    style={{
+      color: "#4a6a77",
+      display: "-webkit-box",
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: "vertical",
+      overflow: "hidden",
+    }}
+  >
+    {excerptText}
+  </p>
+)}
 
       
 

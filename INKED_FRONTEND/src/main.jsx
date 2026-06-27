@@ -8,7 +8,7 @@ import './index.css'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  
 
     <GoogleOAuthProvider clientId="862287483480-6vm29tsq5dab9ebfi296ukm986kvsebb.apps.googleusercontent.com">
 
@@ -26,5 +26,5 @@ createRoot(document.getElementById('root')).render(
 
     </GoogleOAuthProvider>
 
-  </StrictMode>,
+  
 )

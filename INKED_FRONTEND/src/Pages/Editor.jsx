@@ -1,4 +1,4 @@
-
+import EditorJSComponent from "../Components/EditorJS";
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import api from '../services/api'
@@ -9,9 +9,14 @@ export default function Editor() {
   const { id } = useParams()
 
   const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
+  const [content, setContent] = useState({
+  time: Date.now(),
+  blocks: [],
+  version: "2.31.6",
+})
   const [tags, setTags] = useState('')
   const [isLoaded, setIsLoaded] = useState(false)
+  const [editorReady, setEditorReady] = useState(!id)
 
   useEffect(() => {
   if (id) return
@@ -24,7 +29,13 @@ export default function Editor() {
       const parsed = JSON.parse(savedDraft)
 
       setTitle(parsed.title || "")
-      setContent(parsed.content || "")
+      setContent(
+  parsed.content || {
+    time: Date.now(),
+    blocks: [],
+    version: "2.31.6",
+  }
+);
       setTags(parsed.tags || "")
     } catch (error) {
       console.error(error)
@@ -73,7 +84,16 @@ useEffect(() => {
       (response.data.tags || []).join(", ")
     )
 
-    setContent(response.data.content)
+    setContent(
+  response.data.content || {
+    time: Date.now(),
+    blocks: [],
+    version: "2.31.6",
+  }
+
+  
+);
+setEditorReady(true);
 
   } catch (error) {
     console.error(error)
@@ -84,7 +104,46 @@ useEffect(() => {
 
 }, [id])
 
-  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
+  const wordCount = content?.blocks
+  ? content.blocks.reduce((total, block) => {
+      let text = "";
+
+      switch (block.type) {
+        case "paragraph":
+        case "header":
+        case "quote":
+          text = block.data.text || "";
+          break;
+
+        case "list":
+          text = (block.data.items || []).join(" ");
+          break;
+
+        case "checklist":
+          text = (block.data.items || [])
+            .map(item => item.text)
+            .join(" ");
+          break;
+
+        case "code":
+          text = block.data.code || "";
+          break;
+
+        default:
+          text = "";
+      }
+
+      // remove HTML tags (<b>, <i>, etc.)
+      text = text.replace(/<[^>]*>/g, "");
+
+      return (
+        total +
+        (text.trim()
+          ? text.trim().split(/\s+/).length
+          : 0)
+      );
+    }, 0)
+  : 0;
 
   async function handleSaveDraft() {
   const token = localStorage.getItem("token")
@@ -99,7 +158,7 @@ useEffect(() => {
     return
   }
 
-  if (!content.trim()) {
+  if (!content.blocks?.length) {
     toast.warning("Please write some content")
     return
   }
@@ -175,7 +234,7 @@ async function handleSubmitForReview() {
     return;
   }
 
-  if (!content.trim()) {
+  if (!content.blocks?.length) {
     toast.warning("Please write some content");
     return;
   }
@@ -271,17 +330,9 @@ async function handleSubmitForReview() {
 }
 
   function handleAiAssist() {
-    if (!content.trim()) {
-      toast.warning("Write something first.")
-      return
-    }
-
-    setContent(
-      content +
-        '\n\n[AI Suggestion]: Add an example to make this section more engaging.'
-    )
+    toast.info("AI Assist coming soon");
   }
-
+console.log(JSON.stringify(content, null, 2));
   return (
     <div
       className="min-h-screen px-5 py-10"
@@ -368,26 +419,23 @@ async function handleSubmitForReview() {
               Content
             </label>
 
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Start writing here..."
-              className="w-full min-h-[400px] px-4 py-3 rounded-xl outline-none resize-none"
-              style={{
-                background: 'rgba(255,255,255,0.75)',
-                border: '1px solid rgba(33,150,188,0.20)',
-                color: '#0f2a35',
-              }}
-            />
+            {editorReady && (
+  <div className="relative">
+  <EditorJSComponent
+    data={content}
+    onChange={setContent}
+  />
+</div>
+)}
           </div>
 
         
           <p
-            className="text-sm mt-3"
-            style={{ color: '#7a9aa8' }}
-          >
-            Words: {wordCount}
-          </p>
+  className="text-sm mt-3"
+  style={{ color: "#7a9aa8" }}
+>
+  Words: {wordCount}
+</p>
 
        
           <div className="flex flex-wrap gap-3 mt-8">

@@ -8,9 +8,9 @@ const blogSchema = new mongoose.Schema(
     },
 
     content: {
-      type: String,
-      required: true,
-    },
+  type: mongoose.Schema.Types.Mixed,
+  required: true,
+},
     slug: {
   type: String,
   unique: true,
