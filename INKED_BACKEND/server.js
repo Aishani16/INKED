@@ -1,5 +1,7 @@
-const express = require("express");
+
 const dotenv = require("dotenv");
+dotenv.config();
+const express = require("express");
 const cors = require("cors");
 
 const connectDB = require("./config/db");
@@ -7,12 +9,15 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const blogRoutes = require("./routes/blogRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const commentRoutes =
-require("./routes/commentRoutes");
-const userRoutes =
-require("./routes/userRoutes");
+const commentRoutes = require("./routes/commentRoutes");
+const userRoutes = require("./routes/userRoutes");
+const uploadRoutes = require("./routes/uploadRoutes.js");
 
-dotenv.config();
+
+
+console.log("Cloud:", process.env.CLOUDINARY_CLOUD_NAME);
+console.log("Key:", process.env.CLOUDINARY_API_KEY);
+console.log("Secret exists:", !!process.env.CLOUDINARY_API_SECRET);
 
 connectDB();
 
@@ -36,6 +41,7 @@ app.use(
   "/api/users",
   userRoutes
 );
+app.use("/api/uploads", uploadRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

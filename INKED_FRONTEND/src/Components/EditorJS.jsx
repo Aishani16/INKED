@@ -10,7 +10,11 @@ import Table from "@editorjs/table";
 import Embed from "@editorjs/embed";
 import Paragraph from "@editorjs/paragraph";
 import "../Styles/editor.css";
-console.log("Embed Tool:", Embed);
+import ImageTool from "@editorjs/image";
+import Underline from "@editorjs/underline";
+import Marker from "@editorjs/marker";
+import InlineCode from "@editorjs/inline-code";
+import Strikethrough from "@sotaproject/strikethrough";
 
 export default function EditorJSComponent({
   data,
@@ -60,6 +64,13 @@ export default function EditorJSComponent({
     title: "Paragraph",
   },
 },
+underline: Underline,
+
+marker: Marker,
+
+inlineCode: InlineCode,
+
+strikethrough: Strikethrough,
 
          list: {
     class: List,
@@ -108,6 +119,14 @@ export default function EditorJSComponent({
       youtube: true,
       vimeo: true,
       codepen: true,
+    },
+  },
+},
+image: {
+  class: ImageTool,
+  config: {
+    endpoints: {
+      byFile: "http://localhost:5000/api/uploads",
     },
   },
 },
