@@ -5,21 +5,33 @@ import api from '../services/api'
 import { toast } from "react-toastify";
 
 export default function Editor() {
-  const navigate = useNavigate()
-  const { id } = useParams()
+  const navigate = useNavigate();
+const { id } = useParams();
 
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState({
+// For new articles, draftId starts as null.
+// For existing articles, draftId is the URL id.
+const [draftId, setDraftId] = useState(id || null);
+
+const [title, setTitle] = useState("");
+
+const [content, setContent] = useState({
   time: Date.now(),
   blocks: [],
   version: "2.31.6",
-})
-  const [tags, setTags] = useState('')
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [editorReady, setEditorReady] = useState(!id)
+});
 
+const [tags, setTags] = useState("");
+
+const [isLoaded, setIsLoaded] = useState(false);
+const [editorReady, setEditorReady] = useState(!id);
+
+const [saveStatus, setSaveStatus] = useState("saved");
+
+// This will prevent autosave immediately after loading a draft
+const [isDirty, setIsDirty] = useState(false);
   useEffect(() => {
   if (id) return
+  
 
   const savedDraft =
     localStorage.getItem("editorDraft")
@@ -37,12 +49,14 @@ export default function Editor() {
   }
 );
       setTags(parsed.tags || "")
+      setIsDirty(false);
     } catch (error) {
       console.error(error)
     }
   }
 
   setIsLoaded(true)
+  setEditorReady(true);
 
 }, [id])
 
@@ -93,7 +107,11 @@ useEffect(() => {
 
   
 );
+
+setDraftId(id);
+setIsDirty(false);
 setEditorReady(true);
+
 
   } catch (error) {
     console.error(error)
@@ -104,6 +122,24 @@ setEditorReady(true);
 
 }, [id])
 
+useEffect(() => {
+  if (!editorReady) return;
+
+  if (!isDirty) return;
+
+  const timer = setTimeout(() => {
+    saveDraft(true);
+  }, 3000);
+
+  return () => clearTimeout(timer);
+
+}, [
+  title,
+  content,
+  tags,
+  isDirty,
+  editorReady,
+]);
   const wordCount = content?.blocks
   ? content.blocks.reduce((total, block) => {
       let text = "";
@@ -145,80 +181,83 @@ setEditorReady(true);
     }, 0)
   : 0;
 
-  async function handleSaveDraft() {
-  const token = localStorage.getItem("token")
+  async function saveDraft(silent = false) {
+  const token = localStorage.getItem("token");
 
-  if (!token) {
-    toast.error("Please login first")
-    return
-  }
+  if (!token) return null;
 
-  if (!title.trim()) {
-    toast.warning("Please enter a title")
-    return
-  }
+  if (!title.trim()) return null;
 
-  if (!content.blocks?.length) {
-    toast.warning("Please write some content")
-    return
-  }
+  if (!content?.blocks?.length) return null;
 
   try {
-    let response
+    setSaveStatus("saving");
 
-if (id) {
+    let response;
 
-  response = await api.put(
-    `/blogs/${id}`,
-    {
+    const payload = {
       title,
       content,
-      tags: tags.split(",").map(tag => tag.trim()),
-      
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      tags: tags
+        .split(",")
+        .map(tag => tag.trim())
+        .filter(Boolean),
+    };
+
+    if (draftId) {
+      response = await api.put(
+        `/blogs/${draftId}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } else {
+      response = await api.post(
+        "/blogs/create",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const newId = response.data._id;
+
+      setDraftId(newId);
+
+      navigate(`/editor/${newId}`, {
+        replace: true,
+      });
+      localStorage.removeItem("editorDraft");
     }
-  )
 
-} else {
+    setSaveStatus("saved");
+    setIsDirty(false);
 
-  response = await api.post(
-    "/blogs/create",
-    {
-      title,
-      content,
-      tags: tags.split(",").map(tag => tag.trim()),
-      
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+    if (!silent) {
+      toast.success("Draft saved");
     }
-  )
 
-}
-    console.log(response.data)
-
-    toast.success("Draft saved successfully!")
-
-localStorage.removeItem("editorDraft")
-
-if (!id) {
-  navigate(`/editor/${response.data._id}`)
-}
-
+    return response.data;
   } catch (error) {
-    console.error(error)
+    console.error(error);
 
-    toast.error(
-      error.response?.data?.message ||
-      "Failed to save draft"
-)
+    setSaveStatus("error");
+
+    if (!silent) {
+      toast.error("Failed to save draft");
+    }
+
+    return null;
   }
+}
+
+  async function handleSaveDraft() {
+  await saveDraft(false);
 }
 
 async function handleSubmitForReview() {
@@ -243,9 +282,9 @@ async function handleSubmitForReview() {
     let blogId;
 
     // Existing blog
-    if (id) {
+    if (draftId) {
       const updateResponse = await api.put(
-        `/blogs/${id}`,
+        `/blogs/${draftId}`,
         {
           title,
           content,
@@ -274,7 +313,7 @@ async function handleSubmitForReview() {
         return;
       }
 
-      blogId = id;
+      blogId = draftId;
     }
 
     // Brand new blog
@@ -369,7 +408,7 @@ console.log(JSON.stringify(content, null, 2));
               color: '#0f2a35',
             }}
           >
-            {id ? "Edit Article" : "Write Article"}
+            {draftId ? "Edit Article" : "Write Article"}
           </h1>
 
         
@@ -385,7 +424,10 @@ console.log(JSON.stringify(content, null, 2));
               type="text"
               placeholder="Enter article title..."
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+  setTitle(e.target.value);
+  setIsDirty(true);
+}}
               className="w-full px-4 py-3 rounded-xl outline-none"
               style={{
                 background: 'rgba(255,255,255,0.75)',
@@ -401,7 +443,10 @@ console.log(JSON.stringify(content, null, 2));
             <input
                 type="text"
                 value={tags}
-                onChange={(e) => setTags(e.target.value)}
+                onChange={(e) => {
+  setTags(e.target.value);
+  setIsDirty(true);
+}}
                 placeholder="React, JavaScript, Frontend"
                 className="w-full px-4 py-3 rounded-xl outline-none"
                 style={{
@@ -422,9 +467,12 @@ console.log(JSON.stringify(content, null, 2));
             {editorReady && (
   <div className="relative">
   <EditorJSComponent
-    data={content}
-    onChange={setContent}
-  />
+  data={content}
+  onChange={(data) => {
+    setContent(data);
+    setIsDirty(true);
+  }}
+/>
 </div>
 )}
           </div>
@@ -435,6 +483,14 @@ console.log(JSON.stringify(content, null, 2));
   style={{ color: "#7a9aa8" }}
 >
   Words: {wordCount}
+</p>
+<p
+  className="text-sm mt-4"
+  style={{ color: "#7a9aa8" }}
+>
+  {saveStatus === "saving" && "Saving..."}
+  {saveStatus === "saved" && " Saved"}
+  {saveStatus === "error" && " Failed to save"}
 </p>
 
        

@@ -16,8 +16,35 @@ export default function Blogs() {
   const titleMatch =
     blog.title?.toLowerCase().includes(search);
 
-  const contentMatch =
-    blog.content?.toLowerCase().includes(search);
+  const contentText =
+  blog.content?.blocks
+    ?.map((block) => {
+      switch (block.type) {
+        case "paragraph":
+        case "header":
+        case "quote":
+          return block.data.text || "";
+
+        case "list":
+          return (block.data.items || []).join(" ");
+
+        case "checklist":
+          return (block.data.items || [])
+            .map((item) => item.text)
+            .join(" ");
+
+        case "code":
+          return block.data.code || "";
+
+        default:
+          return "";
+      }
+    })
+    .join(" ")
+    .replace(/<[^>]*>/g, "") || "";
+
+const contentMatch =
+  contentText.toLowerCase().includes(search);
 
   const tagMatch =
     blog.tags?.some((tag) =>
