@@ -15,9 +15,6 @@ const uploadRoutes = require("./routes/uploadRoutes.js");
 
 
 
-console.log("Cloud:", process.env.CLOUDINARY_CLOUD_NAME);
-console.log("Key:", process.env.CLOUDINARY_API_KEY);
-console.log("Secret exists:", !!process.env.CLOUDINARY_API_SECRET);
 
 connectDB();
 

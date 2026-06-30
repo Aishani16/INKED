@@ -141,6 +141,19 @@ image: {
     };
   }, []);
 
+  const hasRenderedInitialData = useRef(false);
+
+useEffect(() => {
+  if (!editorRef.current) return;
+  if (!data?.blocks) return;
+  if (hasRenderedInitialData.current) return;
+
+  editorRef.current.isReady.then(() => {
+    editorRef.current.render(data);
+    hasRenderedInitialData.current = true;
+  });
+}, [data]);
+
   return (
 
   <div
