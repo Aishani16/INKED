@@ -12,6 +12,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const userRoutes = require("./routes/userRoutes");
 const uploadRoutes = require("./routes/uploadRoutes.js");
+const aiRoutes = require("./routes/aiRoutes");
 
 
 
@@ -30,6 +31,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/ai", aiRoutes);
 app.use(
   "/api/comments",
   commentRoutes

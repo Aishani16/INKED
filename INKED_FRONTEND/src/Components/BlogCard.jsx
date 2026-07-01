@@ -8,12 +8,15 @@ export default function BlogCard({ title, excerpt, author, date, readTime, tags 
 
     const excerptText =
   typeof excerpt === "string"
-    ? excerpt
+    ? excerpt.replace(/<[^>]*>/g, "")
     : excerpt?.blocks
         ?.map((block) => {
-          if (block.data?.text) return block.data.text;
+          if (block.data?.text)
+            return block.data.text.replace(/<[^>]*>/g, "");
+
           if (Array.isArray(block.data?.items))
             return block.data.items.join(" ");
+
           return "";
         })
         .join(" ")

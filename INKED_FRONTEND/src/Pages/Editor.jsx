@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import api from '../services/api'
 import { toast } from "react-toastify";
+import AIAssistModal from "../Components/AiAssistantModal";
 
 export default function Editor() {
   const navigate = useNavigate();
@@ -26,6 +27,10 @@ const [isLoaded, setIsLoaded] = useState(false);
 const [editorReady, setEditorReady] = useState(!id);
 
 const [saveStatus, setSaveStatus] = useState("saved");
+const [showAiModal, setShowAiModal] = useState(false);
+const [loadingAI, setLoadingAI] = useState(false);
+const [aiResult, setAiResult] = useState("");
+const [currentAction, setCurrentAction] = useState("");
 
 // This will prevent autosave immediately after loading a draft
 const [isDirty, setIsDirty] = useState(false);
@@ -367,11 +372,105 @@ async function handleSubmitForReview() {
     );
   }
 }
+function extractPlainText() {
+  return content.blocks
+    .map((block) => {
+      switch (block.type) {
+        case "paragraph":
+        case "header":
+        case "quote":
+          return block.data.text || "";
 
-  function handleAiAssist() {
-    toast.info("AI Assist coming soon");
+        case "list":
+          return (block.data.items || []).join("\n");
+
+        case "checklist":
+          return (block.data.items || [])
+            .map((item) => item.text)
+            .join("\n");
+
+        case "code":
+          return block.data.code || "";
+
+        default:
+          return "";
+      }
+    })
+    .join("\n\n")
+    .replace(/<[^>]*>/g, "");
+}
+function convertTextToEditorData(text) {
+  return {
+    time: Date.now(),
+    version: "2.31.6",
+    blocks: text
+      .split("\n")
+      .filter(line => line.trim())
+      .map(line => ({
+        type: "paragraph",
+        data: {
+          text: line,
+        },
+      })),
+  };
+}
+
+function replaceEditorContent(text) {
+  setContent(convertTextToEditorData(text));
+  setIsDirty(true);
+  setShowAiModal(false);
+  toast.success("Editor updated!");
+}
+
+async function runAI(action) {
+  setCurrentAction(action);
+
+  const text = extractPlainText();
+
+  if (!text.trim()) {
+    toast.warning("Write some content first.");
+    return;
   }
-console.log(JSON.stringify(content, null, 2));
+
+  try {
+    setLoadingAI(true);
+
+    const response = await api.post("/ai", {
+      action,
+      content: text,
+    });
+
+    setAiResult(response.data.result);
+
+  } catch (err) {
+    console.error(err);
+    toast.error("AI request failed");
+  } finally {
+    setLoadingAI(false);
+  }
+}
+ 
+    const handleAiAssist = () => {
+  setAiResult("");
+  setShowAiModal(true);
+};
+ function addTag(tag) {
+  const current = tags
+    .split(",")
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  if (current.includes(tag)) {
+    toast.info("Tag already exists");
+    return;
+  }
+
+  setTags([...current, tag].join(", "));
+  setIsDirty(true);
+
+  
+}
+
   return (
     <div
       className="min-h-screen px-5 py-10"
@@ -531,6 +630,22 @@ console.log(JSON.stringify(content, null, 2));
           </div>
         </div>
       </div>
+      <AIAssistModal
+    showAiModal={showAiModal}
+    setShowAiModal={setShowAiModal}
+
+    loadingAI={loadingAI}
+    runAI={runAI}
+
+    currentAction={currentAction}
+    aiResult={aiResult}
+
+    setTitle={setTitle}
+    addTag={addTag}
+    setIsDirty={setIsDirty}
+
+    replaceEditorContent={replaceEditorContent}
+/>
     </div>
   )
 }

@@ -42,7 +42,7 @@ export default function EditorJSComponent({
 
       async onChange() {
   const output = await editor.save();
-  console.log(output);
+ previousData.current = JSON.stringify(output.blocks);
   onChange(output);
 },
 
@@ -141,16 +141,19 @@ image: {
     };
   }, []);
 
-  const hasRenderedInitialData = useRef(false);
+  const previousData = useRef("");
 
 useEffect(() => {
-  if (!editorRef.current) return;
-  if (!data?.blocks) return;
-  if (hasRenderedInitialData.current) return;
+  if (!editorRef.current || !data?.blocks) return;
+
+  const current = JSON.stringify(data.blocks);
+
+  if (current === previousData.current) return;
+
+  previousData.current = current;
 
   editorRef.current.isReady.then(() => {
     editorRef.current.render(data);
-    hasRenderedInitialData.current = true;
   });
 }, [data]);
 
